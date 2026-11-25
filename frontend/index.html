@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Malaria Cell Classifier</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Malaria cell classifier</h1>
+    <div id="pill" class="pill off" role="status"><span class="dot"></span><span id="pill-text">Connecting</span></div>
+  </header>
+
+  <nav>
+    <button data-tab="predict" class="active">Predict</button>
+    <button data-tab="dashboard">Dashboard</button>
+    <button data-tab="retrain">Data and retraining</button>
+  </nav>
+
+  <main>
+    <section id="predict" class="tab active">
+      <div class="predict-grid">
+        <div>
+          <label class="drop" for="file">
+            <input id="file" type="file" accept="image/png,image/jpeg,image/bmp">
+            <span>Choose a cell image</span>
+            <small>PNG, JPEG or BMP, up to 5 MB</small>
+          </label>
+          <button id="predict-btn" class="primary" disabled>Classify cell</button>
+          <p id="predict-msg" class="msg"></p>
+        </div>
+        <div class="lens-wrap">
+          <div id="lens" class="lens"><img id="preview" alt=""></div>
+          <div id="result" class="result" hidden>
+            <p id="verdict" class="verdict"></p>
+            <p id="detail" class="detail"></p>
+            <div class="bar"><div id="bar-fill"></div></div>
+            <p class="detail">Probability parasitized</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="tab">
+      <div class="kpis">
+        <div><span>API</span><b id="k-api">-</b></div>
+        <div><span>Uptime</span><b id="k-uptime">-</b></div>
+        <div><span>Model version</span><b id="k-version">-</b></div>
+        <div><span>Predictions served</span><b id="k-preds">-</b></div>
+        <div><span>Latency mean / p95</span><b id="k-lat">-</b></div>
+      </div>
+      <div class="charts">
+        <figure><figcaption>Images per class and split</figcaption><canvas id="c-classes"></canvas></figure>
+        <figure><figcaption>Mean colour channel over cell pixels</figcaption><canvas id="c-rgb"></canvas></figure>
+        <figure><figcaption>Share of stained pixels per cell</figcaption><canvas id="c-stain"></canvas></figure>
+        <figure><figcaption>Current model, test metrics</figcaption><canvas id="c-metrics"></canvas></figure>
+        <figure><figcaption>Confusion matrix (rows actual, columns predicted)</figcaption><div id="cm" class="cm"></div></figure>
+        <figure><figcaption>Model versions</figcaption><div id="versions" class="versions"></div></figure>
+      </div>
+    </section>
+
+    <section id="retrain" class="tab">
+      <div class="retrain-grid">
+        <div>
+          <h2>Upload labelled images</h2>
+          <div class="seg">
+            <label><input type="radio" name="label" value="parasitized" checked> Parasitized</label>
+            <label><input type="radio" name="label" value="uninfected"> Uninfected</label>
+          </div>
+          <label class="drop" for="files">
+            <input id="files" type="file" accept="image/png,image/jpeg,image/bmp" multiple>
+            <span id="files-text">Choose one or more images</span>
+          </label>
+          <button id="upload-btn" class="primary" disabled>Upload images</button>
+          <p id="upload-msg" class="msg"></p>
+        </div>
+        <div>
+          <h2>Retrain</h2>
+          <p class="detail"><b id="pending">0</b> new images waiting. Retraining starts automatically at <b id="threshold">-</b>.</p>
+          <div class="bar"><div id="pending-fill"></div></div>
+          <div class="params">
+            <label>Epochs <input id="p-epochs" type="number" value="5" min="1" max="20"></label>
+            <label>Learning rate <input id="p-lr" type="number" value="0.00001" step="any"></label>
+            <label>Layers to unfreeze <input id="p-unfreeze" type="number" value="30" min="0" max="150"></label>
+          </div>
+          <button id="retrain-btn" class="primary">Retrain model</button>
+          <p id="retrain-msg" class="msg"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
