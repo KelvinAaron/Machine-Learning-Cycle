@@ -16,8 +16,6 @@ FEATURE_CACHE_PATH = DATA_DIR / "feature_cache.json"
 
 DATASET_URLS = [
     "https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip",
-    "https://ceb.nlm.nih.gov/proj/malaria/cell_images.zip",
-    "ftp://lhcftp.nlm.nih.gov/Open-Access-Datasets/Malaria/cell_images.zip",
 ]
 
 IMG_SIZE = (128, 128)
