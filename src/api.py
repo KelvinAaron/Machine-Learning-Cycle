@@ -1,8 +1,10 @@
 import io
 import json
+import socket
 import time
 import uuid
 from collections import deque
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import List
 
@@ -17,7 +19,16 @@ from src import preprocessing as P
 from src.prediction import InvalidImage, ModelNotAvailable, predictor
 from src.retrain import current_entry, job, load_registry, pending_uploads, should_retrain
 
-app = FastAPI(title="Malaria Cell Classifier API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_):
+    try:
+        predictor.warm_up()
+    except ModelNotAvailable:
+        pass
+    yield
+
+
+app = FastAPI(title="Malaria Cell Classifier API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware, allow_origins=config.ALLOWED_ORIGINS, allow_methods=["*"], allow_headers=["*"]
 )
@@ -77,6 +88,7 @@ def health():
         "uptime_seconds": round(time.time() - STARTED_AT, 1),
         "started_at": _iso(STARTED_AT),
         "model_version": _version(),
+        "instance": socket.gethostname(),
     }
 
 

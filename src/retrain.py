@@ -1,6 +1,9 @@
 import json
+import os
 import shutil
+import socket
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -127,26 +130,63 @@ def run_retraining(trigger="manual", epochs=5, lr=1e-5, unfreeze_last=30):
     }
 
 
+def _idle_state():
+    return {"status": "idle", "trigger": None, "started_at": None, "finished_at": None, "result": None, "error": None, "instance": None}
+
+
+def read_state():
+    if not config.RETRAIN_STATE_PATH.exists():
+        return _idle_state()
+    state = json.loads(config.RETRAIN_STATE_PATH.read_text())
+    # A container that died mid-run leaves "running" behind; the lock file is the proof a run is still alive.
+    if state["status"] == "running" and not config.RETRAIN_LOCK_PATH.exists():
+        state = {**state, "status": "failed", "error": "Retraining was interrupted."}
+    return state
+
+
+def _write_state(state):
+    config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = config.RETRAIN_STATE_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(state, indent=2))
+    tmp.replace(config.RETRAIN_STATE_PATH)
+
+
+def _acquire_lock():
+    config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        os.close(os.open(config.RETRAIN_LOCK_PATH, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+        return True
+    except FileExistsError:
+        age = time.time() - config.RETRAIN_LOCK_PATH.stat().st_mtime
+        if age < config.RETRAIN_LOCK_TIMEOUT:
+            return False
+        # Stale lock from a crashed container would otherwise block retraining forever.
+        config.RETRAIN_LOCK_PATH.unlink(missing_ok=True)
+        return _acquire_lock()
+
+
 class RetrainJob:
-    def __init__(self):
-        self._lock = threading.Lock()
-        self.state = {"status": "idle", "trigger": None, "started_at": None, "finished_at": None, "result": None, "error": None}
+    # State and lock live on the shared volume so every container sees one retraining run, not one each.
+    @property
+    def state(self):
+        return read_state()
 
     def start(self, trigger="manual", **kwargs):
-        with self._lock:
-            if self.state["status"] == "running":
-                return False
-            self.state = {"status": "running", "trigger": trigger, "started_at": _now(), "finished_at": None, "result": None, "error": None}
+        if not _acquire_lock():
+            return False
+        _write_state({**_idle_state(), "status": "running", "trigger": trigger, "started_at": _now(), "instance": socket.gethostname()})
         threading.Thread(target=self._run, kwargs={"trigger": trigger, **kwargs}, daemon=True).start()
         return True
 
     def _run(self, **kwargs):
         try:
-            result = run_retraining(**kwargs)
-            update = {"status": "done", "result": result}
+            update = {"status": "done", "result": run_retraining(**kwargs)}
         except Exception as exc:
             update = {"status": "failed", "error": str(exc)}
-        self.state = {**self.state, **update, "finished_at": _now()}
+        try:
+            _write_state({**read_state(), **update, "finished_at": _now()})
+        finally:
+            config.RETRAIN_LOCK_PATH.unlink(missing_ok=True)
 
 
 job = RetrainJob()

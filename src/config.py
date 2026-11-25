@@ -13,6 +13,9 @@ TEST_DIR = DATA_DIR / "test"
 UPLOAD_DIR = DATA_DIR / "uploads"
 REGISTRY_PATH = MODELS_DIR / "registry.json"
 FEATURE_CACHE_PATH = DATA_DIR / "feature_cache.json"
+RETRAIN_STATE_PATH = MODELS_DIR / "retrain_state.json"
+RETRAIN_LOCK_PATH = MODELS_DIR / "retrain.lock"
+RETRAIN_LOCK_TIMEOUT = 6 * 3600
 
 DATASET_URLS = [
     "https://data.lhncbc.nlm.nih.gov/public/Malaria/cell_images.zip",

@@ -1,3 +1,4 @@
+import socket
 import threading
 import time
 
@@ -45,6 +46,11 @@ class Predictor:
                 self._version = entry["version"]
             self._registry_mtime = stamp
 
+    def warm_up(self):
+        self._ensure_current()
+        # The first forward pass builds the graph; doing it at startup keeps it out of the first user's latency.
+        self._model(tf.zeros((1, *config.INPUT_SHAPE)), training=False)
+
     def predict(self, image_bytes):
         self._ensure_current()
         start = time.perf_counter()
@@ -60,6 +66,7 @@ class Predictor:
             "confidence": round(prob if label == "parasitized" else 1 - prob, 4),
             "model_version": self._version,
             "latency_ms": round((time.perf_counter() - start) * 1000, 2),
+            "instance": socket.gethostname(),
         }
 
 
