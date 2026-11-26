@@ -7,7 +7,8 @@ A retrainable image classification pipeline that tells whether a blood cell imag
 - **Backend:** FastAPI, served by several Docker containers behind an nginx load balancer.
 - **Frontend:** plain HTML, CSS and JavaScript in `frontend/`.
 - **Live API:** https://machine-learning-cycle-zn31.onrender.com (free tier, the first request after idle can take about a minute)
-- **Demo video:** [add link]
+- **Demo video:** [Video Demo](https://youtu.be/A8_dBo4I1dY)
+- **Github repo:** [Github Repo](https://github.com/KelvinAaron/Machine-Learning-Cycle.git)
 
 ## What the app does
 

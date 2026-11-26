@@ -1,0 +1,24 @@
+{
+  "url": "https://machine-learning-cycle-zn31.onrender.com",
+  "model_versions_seen": [
+    1
+  ],
+  "n_images": 100,
+  "accuracy": 0.98,
+  "precision": 0.9615384615384616,
+  "recall": 1.0,
+  "f1": 0.9803921568627451,
+  "roc_auc": 0.9984,
+  "confusion_matrix": [
+    [
+      48,
+      2
+    ],
+    [
+      0,
+      50
+    ]
+  ],
+  "latency_ms_mean": 1677.461911000055,
+  "latency_ms_p95": 1933.3229900002607
+}
